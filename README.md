@@ -1,7 +1,10 @@
 cowcheck
 ========
 
-A microservice that does micro things.
+A microservice for checking the health of a Rancher node. 
+Presents an HTTP interface on port `5050` for querying health status.
+Will return `200 OK` when healthy and `503 Service Unavailable` when one
+or more of its checks were unhealthy in the most recent evaluation cycle.
 
 ## Building
 
@@ -13,7 +16,6 @@ A microservice that does micro things.
 `./bin/cowcheck`
 
 ## License
-Copyright (c) 2014-2016 [Rancher Labs, Inc.](http://rancher.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
