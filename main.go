@@ -134,12 +134,17 @@ func checkState(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func processChecks(checks []CheckInterface) {
+func evalChecks(checks []CheckInterface) {
+	for _, check := range checks {
+		check.eval()
+	}
+}
+
+func checkPoller(checks []CheckInterface) {
+	evalChecks(checks)  // call once for instant first tick
 	t := time.NewTicker(2 * time.Second)
 	for _ = range (t.C) {
-		for _, check := range checks {
-			check.eval()
-		}
+		evalChecks(checks)
 	}
 }
 
@@ -148,7 +153,7 @@ func main() {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.Info("Starting cowcheck...")
 	checkSlice = append(checkSlice, NewCheckKubeAPI(), NewCheckMetadata())
-	go processChecks(checkSlice)
+	go checkPoller(checkSlice)
 
 	http.HandleFunc("/", checkState)
 	err := http.ListenAndServe(":5050", nil)
