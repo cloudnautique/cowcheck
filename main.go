@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/Sirupsen/logrus"
-	"time"
-        "net/http"
 	"github.com/davecgh/go-spew/spew"
+	"net/http"
+	"time"
 )
 
 var VERSION = "v0.0.0-dev"
@@ -29,11 +29,9 @@ type Check struct {
 	currentStatus bool
 }
 
-
 func (c *Check) eval() bool {
 	return true
 }
-
 
 func (c *Check) fail() bool {
 	logrus.Infof("Check %s has failed", c.name)
@@ -50,7 +48,6 @@ func (c *Check) getName() string {
 	return c.name
 }
 
-
 // Implemented checks
 
 //CheckKubeAPI is a check for the Kubernetes API
@@ -61,8 +58,8 @@ type CheckKubeAPI struct {
 func NewCheckKubeAPI() *CheckKubeAPI {
 	return &CheckKubeAPI{
 		Check{
-			name: "CheckKubeAPI",
-			description: "A check for the Kubernetes API",
+			name:          "CheckKubeAPI",
+			description:   "A check for the Kubernetes API",
 			currentStatus: true,
 		},
 	}
@@ -70,7 +67,7 @@ func NewCheckKubeAPI() *CheckKubeAPI {
 
 func (c *CheckKubeAPI) eval() bool {
 	logrus.Infof("Evaluating check %s", c.name)
-	logrus.WithFields(logrus.Fields{"before_eval":"true"}).Debug(spew.Sdump(c))
+	logrus.WithFields(logrus.Fields{"before_eval": "true"}).Debug(spew.Sdump(c))
 	c.lastEval = time.Now()
 	httpClient := http.Client{Timeout: time.Duration(2 * time.Second)}
 	resp, err := httpClient.Get("http://kubernetes.kubernetes.rancher.internal")
@@ -79,11 +76,10 @@ func (c *CheckKubeAPI) eval() bool {
 		return true
 	}
 	defer resp.Body.Close()
-	logrus.WithFields(logrus.Fields{"before_eval":"false"}).Debug(spew.Sdump(c))
+	logrus.WithFields(logrus.Fields{"before_eval": "false"}).Debug(spew.Sdump(c))
 	c.currentStatus = true
 	return true
 }
-
 
 // CheckMetadata is a check for the Metadata Service
 type CheckMetadata struct {
@@ -93,8 +89,8 @@ type CheckMetadata struct {
 func NewCheckMetadata() *CheckMetadata {
 	return &CheckMetadata{
 		Check{
-			name: "CheckMetadata",
-			description: "A check for the CheckMetadata Service",
+			name:          "CheckMetadata",
+			description:   "A check for the CheckMetadata Service",
 			currentStatus: true,
 		},
 	}
@@ -102,7 +98,7 @@ func NewCheckMetadata() *CheckMetadata {
 
 func (c *CheckMetadata) eval() bool {
 	logrus.Infof("Evaluating check %s", c.name)
-	logrus.WithFields(logrus.Fields{"before_eval":"true"}).Debug(spew.Sdump(c))
+	logrus.WithFields(logrus.Fields{"before_eval": "true"}).Debug(spew.Sdump(c))
 	c.lastEval = time.Now()
 	httpClient := http.Client{Timeout: time.Duration(2 * time.Second)}
 	resp, err := httpClient.Get("http://169.254.169.250")
@@ -112,7 +108,7 @@ func (c *CheckMetadata) eval() bool {
 		return true
 	}
 	defer resp.Body.Close()
-	logrus.WithFields(logrus.Fields{"before_eval":"false"}).Debug(spew.Sdump(c))
+	logrus.WithFields(logrus.Fields{"before_eval": "false"}).Debug(spew.Sdump(c))
 	return true
 }
 
@@ -141,23 +137,22 @@ func evalChecks(checks []CheckInterface) {
 }
 
 func checkPoller(checks []CheckInterface) {
-	evalChecks(checks)  // call once for instant first tick
+	evalChecks(checks) // call once for instant first tick
 	t := time.NewTicker(2 * time.Second)
-	for _ = range (t.C) {
+	for _ = range t.C {
 		evalChecks(checks)
 	}
 }
 
-
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetLevel(logrus.WarnLevel)
 	logrus.Info("Starting cowcheck...")
 	checkSlice = append(checkSlice, NewCheckKubeAPI(), NewCheckMetadata())
 	go checkPoller(checkSlice)
 
 	http.HandleFunc("/", checkState)
 	err := http.ListenAndServe(":5050", nil)
-	if err != nil{
+	if err != nil {
 		logrus.Error(err)
 	}
 }
