@@ -5,6 +5,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"time"
+	"github.com/miekg/dns"
 )
 
 var VERSION = "v0.0.0-dev"
@@ -34,7 +35,7 @@ func (c *Check) eval() bool {
 }
 
 func (c *Check) fail() bool {
-	logrus.Infof("Check %s has failed", c.name)
+	logrus.Errorf("Check %s has failed", c.name)
 	c.lastFail = time.Now()
 	c.currentStatus = false
 	return true
@@ -50,32 +51,44 @@ func (c *Check) getName() string {
 
 // Implemented checks
 
-//CheckKubeAPI is a check for the Kubernetes API
-type CheckKubeAPI struct {
+//CheckDNS is a check for the Kubernetes API
+type CheckDNS struct {
 	Check
 }
 
-func NewCheckKubeAPI() *CheckKubeAPI {
-	return &CheckKubeAPI{
+func NewCheckDNS() *CheckDNS {
+	return &CheckDNS{
 		Check{
-			name:          "CheckKubeAPI",
-			description:   "A check for the Kubernetes API",
+			name:          "CheckDNS",
+			description:   "A check for the DNS Service",
 			currentStatus: true,
 		},
 	}
 }
 
-func (c *CheckKubeAPI) eval() bool {
+func (c *CheckDNS) eval() bool {
 	logrus.Infof("Evaluating check %s", c.name)
 	logrus.WithFields(logrus.Fields{"before_eval": "true"}).Debug(spew.Sdump(c))
 	c.lastEval = time.Now()
-	httpClient := http.Client{Timeout: time.Duration(2 * time.Second)}
-	resp, err := httpClient.Get("http://kubernetes.kubernetes.rancher.internal")
+
+	// borrowing from https://godoc.org/github.com/miekg/dns#example-MX
+	config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
+	dnsClient := new(dns.Client)
+	m := new(dns.Msg)
+	m.SetQuestion("rancher-metadata.rancher.internal.", dns.TypeA)
+	m.RecursionDesired = true
+	r, _, err := dnsClient.Exchange(m, config.Servers[0]+":"+config.Port)
 	if err != nil {
+		logrus.Error(err)
 		c.fail()
 		return true
 	}
-	defer resp.Body.Close()
+	if r.Rcode != dns.RcodeSuccess {
+		logrus.Error(err)
+		c.fail()
+		return true
+	}
+
 	logrus.WithFields(logrus.Fields{"before_eval": "false"}).Debug(spew.Sdump(c))
 	c.currentStatus = true
 	return true
@@ -146,11 +159,13 @@ func checkPoller(checks []CheckInterface) {
 
 func main() {
 	logrus.SetLevel(logrus.WarnLevel)
-	logrus.Info("Starting cowcheck...")
-	checkSlice = append(checkSlice, NewCheckKubeAPI(), NewCheckMetadata())
+	logrus.Warn("Starting cowcheck...")
+	checkSlice = append(checkSlice, NewCheckDNS(), NewCheckMetadata())
 	go checkPoller(checkSlice)
 
 	http.HandleFunc("/", checkState)
+	http.HandleFunc("/health", checkState)
+
 	err := http.ListenAndServe(":5050", nil)
 	if err != nil {
 		logrus.Error(err)
