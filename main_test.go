@@ -1,19 +1,17 @@
 package main
 
 import (
-	"testing"
 	"fmt"
-	"net/http/httptest"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"testing"
 )
-
 
 var (
-	server   *httptest.Server
-	reader   io.Reader
+	server *httptest.Server
+	reader io.Reader
 )
-
 
 type FakeCheck struct {
 	Check
@@ -38,9 +36,7 @@ func TestCheckPoller(t *testing.T) {
 	checkSlice = append(checkSlice, NewFakeCheck())
 	go checkPoller(checkSlice)
 
-
 }
-
 
 func TestHTTP(t *testing.T) {
 	// Borrowing example from https://elithrar.github.io/article/testing-http-handlers-go/
@@ -73,6 +69,3 @@ func TestHTTP(t *testing.T) {
 			rr.Body.String(), expected)
 	}
 }
-
-
-

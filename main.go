@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/miekg/dns"
 	"net/http"
 	"time"
-	"github.com/miekg/dns"
 )
 
 var VERSION = "v0.0.0-dev"
