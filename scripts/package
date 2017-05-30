@@ -7,6 +7,10 @@ ARCH=${ARCH:?"ARCH not set"}
 SUFFIX=""
 [ "${ARCH}" != "amd64" ] && SUFFIX="_${ARCH}"
 
+if [ ! -e ./bin/cowcheck ]; then
+    ./scripts/build
+fi
+
 cd $(dirname $0)/../package
 
 TAG=${TAG:-${VERSION}${SUFFIX}}

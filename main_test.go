@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"os"
+	"github.com/Sirupsen/logrus"
 )
 
 var (
@@ -34,7 +36,7 @@ func (c *FakeCheck) eval() bool {
 
 func TestCheckPoller(t *testing.T) {
 	checkSlice = append(checkSlice, NewFakeCheck())
-	go checkPoller(checkSlice)
+	go checkPoller(checkSlice, 2)
 
 }
 
@@ -69,3 +71,23 @@ func TestHTTP(t *testing.T) {
 			rr.Body.String(), expected)
 	}
 }
+func TestParseConfig(t *testing.T) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("POLL_INTERVAL", "25")
+	cfg := parseConfig()
+	if cfg.logLevel == logrus.DebugLevel {
+		t.Logf("Found expected value for logLevel")
+	} else {
+		t.Errorf("Error: Did not find expected value for logLevel. Expected logrus.DebugLevel")
+	}
+	if cfg.pollInterval == 25 {
+		t.Logf("Found expected value for pollInterval")
+
+	} else {
+		t.Errorf("Did not find expected value for pollInverval")
+
+	}
+
+}
+
+

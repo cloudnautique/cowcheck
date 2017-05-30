@@ -6,13 +6,19 @@ import (
 	"github.com/miekg/dns"
 	"net/http"
 	"time"
+	"os"
+	"strconv"
 )
 
-var VERSION = "v0.0.0-dev"
+var VERSION = "v0.1.0"
 
 var checkSlice = []CheckInterface{}
 
 // Generics
+type Config struct {
+	logLevel	logrus.Level
+	pollInterval	int
+}
 
 // CheckInterface is a interface for Checks
 type CheckInterface interface {
@@ -79,7 +85,7 @@ func (c *CheckDNS) eval() bool {
 	m.RecursionDesired = true
 	r, _, err := dnsClient.Exchange(m, config.Servers[0]+":"+config.Port)
 	if err != nil {
-		logrus.Error(err)
+			logrus.WithFields(logrus.Fields{"type":"check_results"}).Error(err)
 		c.fail()
 		return true
 	}
@@ -116,7 +122,7 @@ func (c *CheckMetadata) eval() bool {
 	httpClient := http.Client{Timeout: time.Duration(2 * time.Second)}
 	resp, err := httpClient.Get("http://169.254.169.250")
 	if err != nil {
-		logrus.Error("Fail")
+		logrus.WithFields(logrus.Fields{"type":"check_results"}).Error(err)
 		c.fail()
 		return true
 	}
@@ -149,19 +155,42 @@ func evalChecks(checks []CheckInterface) {
 	}
 }
 
-func checkPoller(checks []CheckInterface) {
+func checkPoller(checks []CheckInterface, pollInterval int) {
 	evalChecks(checks) // call once for instant first tick
-	t := time.NewTicker(2 * time.Second)
+	t := time.NewTicker(time.Second * time.Duration(pollInterval))
 	for _ = range t.C {
 		evalChecks(checks)
 	}
 }
 
+func parseConfig() Config {
+	_logLevel, found := os.LookupEnv("LOG_LEVEL")
+	if found != true {
+		_logLevel = "WARN"
+	}
+	logLevel, _ := logrus.ParseLevel(_logLevel)
+
+
+	_pollInterval, found := os.LookupEnv("POLL_INTERVAL")
+	if found != true {
+		_pollInterval = "2"
+	}
+	pollInterval,_ := strconv.Atoi(_pollInterval)
+
+
+	return Config{
+		logLevel,
+		pollInterval,
+	}
+
+}
+
 func main() {
-	logrus.SetLevel(logrus.WarnLevel)
+	cfg := parseConfig()
+	logrus.SetLevel(cfg.logLevel)
 	logrus.Warn("Starting cowcheck...")
 	checkSlice = append(checkSlice, NewCheckDNS(), NewCheckMetadata())
-	go checkPoller(checkSlice)
+	go checkPoller(checkSlice, cfg.pollInterval)
 
 	http.HandleFunc("/", checkState)
 	http.HandleFunc("/health", checkState)

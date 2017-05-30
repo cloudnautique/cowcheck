@@ -6,14 +6,33 @@ Presents an HTTP interface on port `5050` for querying health status.
 Will return `200 OK` when healthy and `503 Service Unavailable` when one
 or more of its checks were unhealthy in the most recent evaluation cycle.
 
+## How to use
+Run this as a container on each Rancher host that runs your containers. It will assert 
+basic functionality of the Rancher stack is working such as DNS, Metadata API. When combined
+with a fleet management service such as AWS Auto Scale Groups or Google Cloud Deployment Manager 
+you can replace nodes automatically when they fail. Alternatively you can just monitor and alert 
+by polling the endpoint periodically.  
+                                                              
+
+## Configuration options
+
+* `POLL_INTERVAL`: Time in seconds between evaluating checks
+* `LOG_LEVL`: Level of logging verbosity
+
 ## Building
 
-`make`
+To build the binary:
+`make build`
+
+To create a Docker image: 
+`make package`
 
 
 ## Running
 
-`./bin/cowcheck`
+`docker run --net=host [image name]` 
+
+Or schedule with [Rancher](http://rancher.com) to run as a service. 
 
 ## License
 
