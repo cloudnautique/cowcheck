@@ -30,9 +30,11 @@ To create a Docker image:
 
 ## Running
 
-`docker run --net=host [image name]` 
+`docker run --net=host -p 5050:5050 [image name]`
 
-Or schedule with [Rancher](http://rancher.com) to run as a service. 
+Or schedule with [Rancher](http://rancher.com) to run on all hosts as a 
+[Global Service](https://docs.rancher.com/rancher/v1.6/en/cattle/scheduling/#global-service) (cattle) 
+or [Daemonset](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)(kubernetes). 
 
 ## License
 
