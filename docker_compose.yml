@@ -1,0 +1,15 @@
+version: '2'
+services:
+  cowcheck:
+    image: wjimenez5271/cowcheck:0.2.0
+    environment:
+      LOG_LEVEL: INFO
+      DOCKER_API_VERSION: '1.24'
+      POLL_INTERVAL: '30'
+    stdin_open: true
+    tty: true
+    ports:
+    - 5050:5050/tcp
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.global: 'true'
