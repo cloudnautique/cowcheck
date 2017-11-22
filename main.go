@@ -90,6 +90,21 @@ var promNodeHealth = prometheus.NewGauge(prometheus.GaugeOpts{
 	Help:      "Boolean representation of overall health of node based on sum of all checks",
 })
 
+var promDockerDataStorageFree = prometheus.NewGauge(prometheus.GaugeOpts{
+	Namespace: "cowcheck",
+	Subsystem: "node",
+	Name:      "docker_data_storage",
+	Help:      "Amount of free Docker Data Storage space in bytes",
+})
+
+
+var promDockerMetadataStorageFree = prometheus.NewGauge(prometheus.GaugeOpts{
+	Namespace: "cowcheck",
+	Subsystem: "node",
+	Name:      "docker_metadata_storage",
+	Help:      "Amount of free Docker Metadata Storage space in bytes",
+})
+
 func NewCheckDNS() *CheckDNS {
 	return &CheckDNS{
 		Check{
@@ -189,11 +204,11 @@ func (c *CheckStorage) eval() bool {
 		}
 		for _, item := range info.DriverStatus {
 			if item[0] == "Data Space Available" {
-
 				dataSpaceFree, err = humanize.ParseBytes(item[1])
 				if err != nil {
 					panic(err)
 				}
+				promDockerDataStorageFree.Set(float64(dataSpaceFree))
 				logrus.Debugf("Found 'Data Space Available' value of ", item[1])
 			}
 
@@ -202,6 +217,7 @@ func (c *CheckStorage) eval() bool {
 				if err != nil {
 					panic(err)
 				}
+				promDockerMetadataStorageFree.Set(float64(metadataSpaceFree))
 				logrus.Debugf("Found 'Metadata Space Available' value of ", item[1])
 			}
 		}
