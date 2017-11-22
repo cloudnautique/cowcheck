@@ -3,8 +3,9 @@ cowcheck
 
 A microservice for checking the health of a Rancher node. 
 Presents an HTTP interface on port `5050` for querying health status.
-Will return `200 OK` when healthy and `503 Service Unavailable` when one
-or more of its checks were unhealthy in the most recent evaluation cycle.
+Calling `/` or `/health` will return `200 OK` when healthy and `503 Service Unavailable` when one
+or more of its checks were unhealthy in the most recent evaluation cycle. Additionally, a prometheus 
+endpoint can be found at `/metrics`. See Prometheus section below.
 
 ## How to use
 Run this as a container on each Rancher host that runs your containers. It will assert 
@@ -13,6 +14,10 @@ with a fleet management service such as AWS Auto Scale Groups or Google Cloud De
 you can replace nodes automatically when they fail. Alternatively you can just monitor and alert 
 by polling the endpoint periodically.  
                                                               
+### Prometheus Endpoint
+Provides a metric representation of health through the metric `cowcheck_node_health`. 
+Endpoint is available at `/metrics` on port `5050`. The metric will be set to `0` 
+when healthy and `1` when unhealthy.
 
 ## Configuration options
 
@@ -34,7 +39,7 @@ To create a Docker image:
 
 Or schedule with [Rancher](http://rancher.com) to run on all hosts as a 
 [Global Service](https://docs.rancher.com/rancher/v1.6/en/cattle/scheduling/#global-service) (cattle) 
-or [Daemonset](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)(kubernetes). 
+or [Daemonset](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) (kubernetes). 
 
 ## License
 

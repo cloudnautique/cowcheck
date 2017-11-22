@@ -12,14 +12,20 @@ import (
 	"context"
 	"strings"
 	"github.com/dustin/go-humanize"
+  "github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-var VERSION = "v0.1.0"
+var VERSION = "v0.2.0"
 
 var checkSlice = []CheckInterface{}
 
+
 var dataSpaceFree = uint64(0)
 var metadataSpaceFree = uint64(0)
+
+// Primary representation of node health
+var nodeHealth = true
 
 // Generics
 type Config struct {
@@ -68,10 +74,21 @@ func (c *Check) getName() string {
 
 // Implemented checks
 
-//CheckDNS is a check for the Kubernetes API
+// CheckDNS is a check that looks for a healthy response from the internal DNS zone of Rancher
 type CheckDNS struct {
 	Check
 }
+
+func prometheusHandler() http.Handler {
+	return promhttp.Handler()
+}
+
+var promNodeHealth = prometheus.NewGauge(prometheus.GaugeOpts{
+	Namespace: "cowcheck",
+	Subsystem: "node",
+	Name:      "cowcheck_node_health",
+	Help:      "Boolean representation of overall health of node based on sum of all checks",
+})
 
 func NewCheckDNS() *CheckDNS {
 	return &CheckDNS{
@@ -130,7 +147,7 @@ func (c *CheckMetadata) eval() bool {
 	logrus.Infof("Evaluating check %s", c.name)
 	logrus.WithFields(logrus.Fields{"before_eval": "true"}).Debug(spew.Sdump(c))
 	c.lastEval = time.Now()
-	httpClient := http.Client{Timeout: time.Duration(2 * time.Second)}
+	httpClient := http.Client{Timeout: time.Duration(15 * time.Second)}
 	resp, err := httpClient.Get("http://169.254.169.250")
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"type":"check_results"}).Error(err)
@@ -210,14 +227,7 @@ func (c *CheckStorage) eval() bool {
 
 // HTTP Server
 func checkState(w http.ResponseWriter, r *http.Request) {
-	health := true
-	for _, check := range checkSlice {
-		logrus.Debugf("checkState - Reading state of check %s", check.getName())
-		if check.getStatus() == false {
-			health = false
-		}
-	}
-	if health {
+	if nodeHealth {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Everything OK"))
 	} else {
@@ -230,12 +240,19 @@ func evalChecks(checks []CheckInterface) {
 	for _, check := range checks {
 		check.eval()
 	}
+	for _, check := range checkSlice {
+		logrus.Debugf("checkState - Reading state of check %s", check.getName())
+		if check.getStatus() == false {
+			nodeHealth = false
+			promNodeHealth.Set(1)
+		}
+	}
 }
 
 func checkPoller(checks []CheckInterface, pollInterval int) {
 	evalChecks(checks) // call once for instant first tick
 	t := time.NewTicker(time.Second * time.Duration(pollInterval))
-	for _ = range t.C {
+	for range t.C {
 		evalChecks(checks)
 	}
 }
@@ -287,6 +304,11 @@ func parseConfig() Config {
 
 }
 
+func init() {
+	prometheus.MustRegister(promNodeHealth)
+	promNodeHealth.Set(0)
+}
+
 func main() {
 	cfg := parseConfig()
 	logrus.SetLevel(cfg.logLevel)
@@ -296,6 +318,7 @@ func main() {
 
 	http.HandleFunc("/", checkState)
 	http.HandleFunc("/health", checkState)
+	http.Handle("/metrics", prometheusHandler())  // prometheus metrics endpoint
 
 	err := http.ListenAndServe(":5050", nil)
 	if err != nil {
