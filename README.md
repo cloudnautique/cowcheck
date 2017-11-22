@@ -13,17 +13,17 @@ basic functionality of the Rancher stack is working such as DNS, Metadata API. W
 with a fleet management service such as AWS Auto Scale Groups or Google Cloud Deployment Manager 
 you can replace nodes automatically when they fail. Alternatively you can just monitor and alert 
 by polling the endpoint periodically.  
+
+## What does it check/monitor? 
+
+* Rancher Metadata API
+* Rancher DNS
+* Disk space available on the node (both container data space and Docker/Moby metadata space)
                                                               
 ### Prometheus Endpoint
 Provides a metric representation of health through the metric `cowcheck_node_health`. 
 Endpoint is available at `/metrics` on port `5050`. The metric will be set to `0` 
 when healthy and `1` when unhealthy.
-
-### Current Checks
-
-* Rancher Metadata API
-* Rancher DNS
-* Disk space available on the node (both container data space and Docker/Moby metadata space)
 
 ## Configuration options
 
