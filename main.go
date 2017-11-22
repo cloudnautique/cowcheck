@@ -135,7 +135,7 @@ func (c *CheckMetadata) eval() bool {
 	logrus.Infof("Evaluating check %s", c.name)
 	logrus.WithFields(logrus.Fields{"before_eval": "true"}).Debug(spew.Sdump(c))
 	c.lastEval = time.Now()
-	httpClient := http.Client{Timeout: time.Duration(2 * time.Second)}
+	httpClient := http.Client{Timeout: time.Duration(15 * time.Second)}
 	resp, err := httpClient.Get("http://169.254.169.250")
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"type":"check_results"}).Error(err)
