@@ -1,31 +1,34 @@
 cowcheck
 ========
 
-A microservice for checking the health of a Rancher node. 
+A microservice for checking the health of a [Rancher](http://rancher.com) node. 
 Presents an HTTP interface on port `5050` for querying health status.
 Calling `/` or `/health` will return `200 OK` when healthy and `503 Service Unavailable` when one
 or more of its checks were unhealthy in the most recent evaluation cycle. Additionally, a prometheus 
-endpoint can be found at `/metrics`. See Prometheus section below.
-
-## How to use
-Run this as a container on each Rancher host that runs your containers. It will assert 
-basic functionality of the Rancher stack is working such as DNS, Metadata API. When combined
-with a fleet management service such as AWS Auto Scale Groups or Google Cloud Deployment Manager 
-you can replace nodes automatically when they fail. Alternatively you can just monitor and alert 
-by polling the endpoint periodically.  
+endpoint can be found at `/metrics`. See [Prometheus](#prometheus_endpoint) section below.
 
 ## What does it check/monitor? 
 
 * Rancher Metadata API
 * Rancher DNS
 * Disk space available on the node (both container data space and Docker/Moby metadata space)
+                 
+## How to use
+### With an auto-scaling group
+Run this as a container on each Rancher host that runs your containers. It will assert 
+basic functionality of the Rancher stack is working such as DNS, Metadata API. When combined
+with a fleet management service such as AWS Auto Scale Groups or Google Cloud Deployment Manager 
+you can replace nodes automatically when they fail. Alternatively you can just monitor and alert 
+by polling the endpoint periodically.  
                                                               
-### Prometheus Endpoint
-Provides a metric representation of health through the metric `cowcheck_node_health`. 
-Endpoint is available at `/metrics` on port `5050`. The metric will be set to `0` 
-when healthy and `1` when unhealthy.
+### <a name="prometheus_endpoint"></a> Prometheus Endpoint
+Endpoint is available at `/metrics` on port `5050`. Following metrics are available: 
 
-## Configuration options
+* `cowcheck_node_health`: The metric will be set to `0` when healthy and `1` when unhealthy.
+* `docker_data_storage`: Amount of free Docker Data Storage space in bytes
+* `docker_metadata_storage`: Amount of free Docker Metadata Storage space in bytes
+
+### Configuration options
 
 * `POLL_INTERVAL`: Time in seconds between evaluating checks
 * `LOG_LEVL`: Level of logging verbosity
