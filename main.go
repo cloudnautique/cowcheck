@@ -321,7 +321,7 @@ func parseConfig() Config {
 }
 
 func init() {
-	prometheus.MustRegister(promNodeHealth)
+	prometheus.MustRegister(promNodeHealth, promDockerDataStorageFree, promDockerMetadataStorageFree)
 	promNodeHealth.Set(0)
 }
 

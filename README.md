@@ -29,7 +29,7 @@ when healthy and `1` when unhealthy.
 
 * `POLL_INTERVAL`: Time in seconds between evaluating checks
 * `LOG_LEVL`: Level of logging verbosity
-* `ENABLE_STORAGE_CHECK`: Enable storage check (set to `true`). Currently only supports `devicemapper` storage driver.
+* `ENABLE_STORAGE_CHECK`: Enable storage check by setting to `true`. Disabled by default. Currently only supports `devicemapper` storage driver.
 * `DATA_SPACE_THRESHOLD`: Minimum amount of storage in bytes before failing storage checks.
 * `METADATA_SPACE_THRESHOLD`: Minimum amount of storage in bytes before failing storage checks.
 * `DOCKER_API_VERSION`: The version of the Docker API to use when connecting to the local docker daemon (only for storage checks)
