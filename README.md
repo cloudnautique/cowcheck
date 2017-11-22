@@ -19,10 +19,20 @@ Provides a metric representation of health through the metric `cowcheck_node_hea
 Endpoint is available at `/metrics` on port `5050`. The metric will be set to `0` 
 when healthy and `1` when unhealthy.
 
+### Current Checks
+
+* Rancher Metadata API
+* Rancher DNS
+* Disk space available on the node (both container data space and Docker/Moby metadata space)
+
 ## Configuration options
 
 * `POLL_INTERVAL`: Time in seconds between evaluating checks
 * `LOG_LEVL`: Level of logging verbosity
+* `ENABLE_STORAGE_CHECK`: Enable storage check (set to `true`). Currently only supports `devicemapper` storage driver.
+* `DATA_SPACE_THRESHOLD`: Minimum amount of storage in bytes before failing storage checks.
+* `METADATA_SPACE_THRESHOLD`: Minimum amount of storage in bytes before failing storage checks.
+* `DOCKER_API_VERSION`: The version of the Docker API to use when connecting to the local docker daemon (only for storage checks)
 
 ## Building
 
