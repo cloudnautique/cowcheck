@@ -210,15 +210,17 @@ func (c *CheckStorage) eval() bool {
 				}
 				promDockerDataStorageFree.Set(float64(dataSpaceFree))
 				logrus.Debugf("Found 'Data Space Available' value of ", item[1])
-			}
-
-			if item[0] == "Metadata Space Available" {
+			} else if item[0] == "Metadata Space Available" {
 				metadataSpaceFree, err = humanize.ParseBytes(item[1])
 				if err != nil {
 					panic(err)
 				}
 				promDockerMetadataStorageFree.Set(float64(metadataSpaceFree))
 				logrus.Debugf("Found 'Metadata Space Available' value of ", item[1])
+			} else {
+				// we didn't find any of our storage keys
+				logrus.Error("Didn't find storage information from Docker API. Skipping storage evaluation")
+				return true
 			}
 		}
 
